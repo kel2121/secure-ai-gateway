@@ -32,27 +32,29 @@ def analyze_text(text: str) -> int:
     return min(score, 100)
 @app.post("/analyze")
 def analyze(input_data: InputText):
-    
-    risk_score = analyze_text(input_data.text)
+    try:
+        risk_score = analyze_text(input_data.text)
 
-    # Determine risk level
-    if risk_score == 0:
-        risk_level = "Low"
-        status = "safe"
-    elif risk_score <= 40:
-        risk_level = "Medium"
-        status = "flagged"
-    else:
-        risk_level = "High"
-        status = "flagged"
+        if risk_score < 30:
+            risk_level = "low"
+            status = "allowed"
+        elif risk_score < 70:
+            risk_level = "medium"
+            status = "flagged"
+        else:
+            risk_level = "high"
+            status = "blocked"
 
-    log_entry = f"{datetime.datetime.now()} | Risk Score: {risk_score} | Risk Level: {risk_level} | Text: {input_data.text}\n"
+        log_entry = f"{datetime.datetime.now()} | {input_data.text} | {risk_score} | {risk_level}\n"
 
-    with open("security_logs.txt", "a") as log_file:
-        log_file.write(log_entry)
+        with open("security_logs.txt", "a") as log_file:
+            log_file.write(log_entry)
 
-    return {
-        "risk_score": risk_score,
-        "risk_level": risk_level,
-        "status": status
-    }
+        return {
+            "risk_score": risk_score,
+            "risk_level": risk_level,
+            "status": status
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
